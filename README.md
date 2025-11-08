@@ -20,8 +20,6 @@ These synthetic samples are used for:
 
 ## 🖼️ Example Results
 
-*(Replace the image paths with your own generated grids)*
-
 <p align="center">
   <img width="300" height="300" alt="seed0198" src="https://github.com/user-attachments/assets/0066486c-b758-4d0f-87c1-12c94cd9e014" />
   <br>
