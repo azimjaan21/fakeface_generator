@@ -60,7 +60,13 @@ Objectives include:
 
 **Azimjon Akhtamov** — AI Researcher, Data Analytics Lab, CBNU 🇰🇷
 
-*Acknowledgements: NVIDIA Research for StyleGAN3 and open-source contributors of modern diffusion models.*
+**Acknowledgements:**  
+
+<a href="https://github.com/NVlabs/stylegan" target="_blank">
+  <img src="https://upload.wikimedia.org/wikipedia/sco/2/21/Nvidia_logo.svg" alt="NVIDIA" height="35" style="vertical-align:middle;"/>  
+  NVIDIA Research for StyleGAN3
+</a>  
+Open-source contributors of modern diffusion models.
 
 ---
 
