@@ -43,21 +43,6 @@ These synthetic samples are used for:
 
 ---
 
-## 🗂️ Folder Layout
-
-project_root/
-├─ data/
-│ ├─ real/ # Real reference faces
-│ └─ fake/
-│ ├─ stylegan3/
-│ └─ dsgan/
-├─ docs/
-│ └─ images/ # Grids and previews
-└─ README.md
-
-
----
-
 ## 📊 Research Context
 
 All synthetic data are generated **exclusively for academic and ethical AI research**.
@@ -72,7 +57,7 @@ Objectives include:
 
 ## 👥 Credits
 
-**Azimjon Axtamov** — Researcher, Data Analytics Lab, CBNU 🇰🇷
+**Azimjon Akhtamov** — AI Researcher, Data Analytics Lab, CBNU 🇰🇷
 
 *Acknowledgements: NVIDIA Research for StyleGAN3 and open-source contributors of modern diffusion models.*
 
@@ -88,6 +73,6 @@ Re-use for identity creation, impersonation, or any deceptive activity is **stri
 
 ## 📜 License
 
-© 2025 Azimjon Axtamov. All rights reserved.  
+© 2025 Azimjon Akhtamov. All rights reserved.  
 For research and academic use under fair terms.
 
