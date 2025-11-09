@@ -21,17 +21,13 @@ These synthetic samples are used for:
 ## 🖼️ Example Results
 
 <p align="center">
-  <img width="300" height="300" alt="seed0198" src="https://github.com/user-attachments/assets/0066486c-b758-4d0f-87c1-12c94cd9e014" />
+  <img width="1984" height="971" alt="image" src="https://github.com/user-attachments/assets/a5647244-c67e-4980-88bd-84bc7617aba7" />
+
+  <br>
+  <em>High-fidelity synthetic identities — realistic lighting, expression, and texture</em>
   <br>
   <em>Randomly generated faces using StyleGAN3-T (1024×1024)</em>
   
-</p>
-<p align="center">
-  <img width="300" height="300" alt="seed0010" src="https://github.com/user-attachments/assets/500eae45-a240-409f-9f78-5be5e15e2131" />
-  <br>
-  <em>High-fidelity synthetic identities — realistic lighting, expression, and texture</em>
-</p>
-
 ---
 
 ## 🧩 Models Utilized
