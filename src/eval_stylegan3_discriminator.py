@@ -56,7 +56,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("🔹 Loading StyleGAN3 discriminator...")
 with open(MODEL_PATH, "rb") as f:
     data = legacy.load_network_pkl(f)
-    D = data["D"].eval().requires_grad_(False).to(device) # D - discriminator
+    D = data["D"].eval().requires_grad_(False).to(device) # D - Discriminator
 print("✅ Discriminator loaded successfully.")
 
 # === Preprocessing ===

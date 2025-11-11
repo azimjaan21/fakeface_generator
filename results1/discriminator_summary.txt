@@ -1,1 +1,0 @@
-My_StyleGAN3: mean=-0.590, std=0.907, n=1000
