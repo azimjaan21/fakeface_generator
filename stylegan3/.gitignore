@@ -1,0 +1,86 @@
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+### Python bytecode ###
+__pycache__/
+*.py[cod]
+*$py.class
+
+### Virtual environments ###
+.venv/
+.venv_face/
+venv/
+.venv
+ENV/
+env/
+.env
+fakeface_generator/venv/
+
+### Build and packaging ###
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+### Jupyter ###
+.ipynb_checkpoints/
+.jupyter/lab/workspaces/
+
+### Testing ###
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.ruff_cache/
+.pytype/
+
+### Logs ###
+logs/
+*.log
+
+### Data and artifacts ###
+data/
+datasets/
+outputs/
+results/
+runs/
+
+### ML checkpoints and weights ###
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pb
+*.pkl
+*.pickle
+*.npz
+*.npy
+
+### IDE and editor ###
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*.bak
