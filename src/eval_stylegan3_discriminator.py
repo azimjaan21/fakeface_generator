@@ -33,7 +33,8 @@ from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
 
-TEST_ONLY_MY_FAKES = True
+TEST_ONLY_MY_FAKES = False
+#TEST_ONLY_MY_FAKES = True
 
 # === CONFIG ===
 MODEL_PATH = r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\models\stylegan3-t-ffhq-1024x1024.pkl"
@@ -55,7 +56,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("🔹 Loading StyleGAN3 discriminator...")
 with open(MODEL_PATH, "rb") as f:
     data = legacy.load_network_pkl(f)
-    D = data["D"].eval().requires_grad_(False).to(device)
+    D = data["D"].eval().requires_grad_(False).to(device) # D - discriminator
 print("✅ Discriminator loaded successfully.")
 
 # === Preprocessing ===
