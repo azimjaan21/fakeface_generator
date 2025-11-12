@@ -33,19 +33,14 @@ from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
 
-TEST_ONLY_MY_FAKES = False
-#TEST_ONLY_MY_FAKES = True
 
 # === CONFIG ===
 MODEL_PATH = r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\models\stylegan3-t-ffhq-1024x1024.pkl"
 
 DATA_PATHS = {
-    "ArtiFact_Real": "data/artifact/test/real",
-    "ArtiFact_Fake": "data/artifact/test/fake",
-    "My_StyleGAN3": r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\data\fake\run01"
+     "2-Real(FFHQ)":            r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\data\real",
+     #"My_StyleGAN3": r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\data\fake\run01"
 }
-if TEST_ONLY_MY_FAKES:
-    DATA_PATHS = {"My_StyleGAN3": DATA_PATHS["My_StyleGAN3"]}
 
 OUT_DIR = r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\results"
 os.makedirs(OUT_DIR, exist_ok=True)

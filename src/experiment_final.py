@@ -1,20 +1,23 @@
 """
-Evaluate StyleGAN3 Discriminator Across 4 Experiments (D-Accuracy)
-------------------------------------------------------------------
-Experiments:
-  1️⃣ Fake (Self StyleGAN3)
-  2️⃣ Real (FFHQ)
-  3️⃣ Mixed (StyleGAN3 + FFHQ)
-  4️⃣ Unseen (Diffusion, StableDiffusion, Denoising + FFHQ)
+Evaluate StyleGAN3 Discriminator Across 4 Experiments (Detailed Results)
+------------------------------------------------------------------------
+Training Labels:
+  y = 1 → Fake
+  y = 0 → Real
+
+Testing (probability threshold):
+  ŷ_b > 0.5 → Fake
+  ŷ_b ≤ 0.5 → Real
 
 Outputs:
-  - Per-experiment: mean ± std logits, D-Accuracy (%), AUROC
-  - Per-experiment visuals: *_hist.png, *_classification_bar.png
-  - Overall visuals:
-        discriminator_scores.png (combined histogram)
-        summary_accuracy_bar.png (Mean ± Std + D-Acc %)
-        advanced_d_accuracy.png (modern comparison figure)
-  - discriminator_summary.txt
+  • Mean ± Std of probabilities
+  • D-Accuracy (%)
+  • AUROC
+  • Per-experiment histograms + classification bars
+  • Combined histogram, summary bar, advanced accuracy bar
+  • Confusion counts (TP, TN, FP, FN)
+  • Image-level classification saved in /output_exp/<experiment>/
+  • Text summary → discriminator_summary.txt
 """
 
 import sys, os, torch, numpy as np
@@ -23,6 +26,8 @@ from PIL import Image
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
+import torch.nn.functional as F
+import shutil
 
 # ============ CONFIG ============
 RUN_MODE = "all"
@@ -42,7 +47,9 @@ DATA_PATHS = {
     "4-Unseen(DiffGens+FFHQ)": r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\data\unseen_gen_real",
 }
 OUT_DIR = r"C:\Users\dalab\Desktop\azimjaan21\DeepHUNTER\fakeface_generator\results"
+EXP_DIR = os.path.join(OUT_DIR, "output_exp")
 os.makedirs(OUT_DIR, exist_ok=True)
+os.makedirs(EXP_DIR, exist_ok=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -60,24 +67,28 @@ transform = transforms.Compose([
     transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
 ])
 
+# --- Return discriminator probability (after sigmoid) ---
 def get_score(path):
     img = Image.open(path).convert("RGB")
     img_t = transform(img).unsqueeze(0).to(device)
     with torch.no_grad():
-        return float(D(img_t, None).cpu().item())
+        logit = D(img_t, None)
+        prob = torch.sigmoid(logit)
+        return float(prob.cpu().item())
 
+# --- Assign label (0 = Real, 1 = Fake) ---
 def get_label(path, exp_name):
     name = os.path.basename(path).lower()
-    if "1-fake" in exp_name: return 0
-    if "2-real" in exp_name: return 1
-    if "fake_" in name: return 0
-    if "real_" in name: return 1
+    if "1-fake" in exp_name: return 1
+    if "2-real" in exp_name: return 0
+    if "fake_" in name: return 1
+    if "real_" in name: return 0
     return 0
 
 # ============ EVALUATION ============
 def evaluate_folder(folder, label_name):
     if not os.path.exists(folder):
-        print(f"⚠️ Missing: {folder}")
+        print(f" Missing: {folder}")
         return [], []
     files = [os.path.join(folder,f) for f in os.listdir(folder)
              if f.lower().endswith((".jpg",".png"))]
@@ -87,71 +98,96 @@ def evaluate_folder(folder, label_name):
             scores.append(get_score(f))
             labels.append(get_label(f, label_name))
         except Exception as e:
-            print(f"⚠️ Skipped {f}: {e}")
+            print(f" Skipped {f}: {e}")
     if not scores: return [], []
     scores, labels = np.array(scores), np.array(labels)
-    mean, std = scores.mean(), scores.std()
-    preds = (scores > 0).astype(int)
+
+    preds = (scores > 0.5).astype(int)
     acc = (preds == labels).mean()
+    mean, std = scores.mean(), scores.std()
     auroc = roc_auc_score(labels, scores) if len(np.unique(labels)) > 1 else np.nan
-    print(f"📊 {label_name}: mean={mean:.3f}, std={std:.3f}, D-Acc={acc*100:.1f}%, AUROC={auroc:.3f}, n={len(scores)}")
-    return scores, labels
+
+    # === Confusion Matrix Counts ===
+    TP = np.sum((preds==1)&(labels==1))  # True Fake
+    TN = np.sum((preds==0)&(labels==0))  # True Real
+    FP = np.sum((preds==1)&(labels==0))  # Real→Fake
+    FN = np.sum((preds==0)&(labels==1))  # Fake→Real
+    total = TP + TN + FP + FN
+    print(f" {label_name}: mean={mean:.3f}, std={std:.3f}, D-Acc={acc*100:.1f}%, "
+          f"AUROC={auroc:.3f}, n={len(scores)}")
+    print(f"🔍 Confusion Matrix → TP={TP}, TN={TN}, FP={FP}, FN={FN}, total={total}")
+
+    # === Save image-level results ===
+    exp_out = os.path.join(EXP_DIR, label_name.replace(" ", "_"))
+    subfolders = ["TrueFake", "TrueReal", "FalseFake", "FalseReal"]
+    for sf in subfolders:
+        os.makedirs(os.path.join(exp_out, sf), exist_ok=True)
+
+    for f, p, l in zip(files, preds, labels):
+        fname = os.path.basename(f)
+        if p==1 and l==1:
+            dest = os.path.join(exp_out,"TrueFake",fname)
+        elif p==0 and l==0:
+            dest = os.path.join(exp_out,"TrueReal",fname)
+        elif p==1 and l==0:
+            dest = os.path.join(exp_out,"FalseFake",fname)
+        else:  # p==0 and l==1
+            dest = os.path.join(exp_out,"FalseReal",fname)
+        shutil.copy(f, dest)
+
+    return scores, labels, TP, TN, FP, FN, total, acc, auroc, mean, std
 
 # ============ RUN EXPERIMENTS ============
-all_scores, all_labels = {}, {}
+summary = []
+all_scores = {}
 for name, path in DATA_PATHS.items():
     if RUN_MODE != "all" and not name.startswith(RUN_MODE): continue
-    s, l = evaluate_folder(path, name)
-    if len(s): all_scores[name], all_labels[name] = s, l
+    s, l, TP, TN, FP, FN, total, acc, auroc, mean, std = evaluate_folder(path, name)
+    if len(s):
+        all_scores[name] = s
+        summary.append((name, mean, std, acc, auroc, TP, TN, FP, FN, total))
 
 # ============ VISUALS ============
-summary = []
-for name, scores in all_scores.items():
-    labels = all_labels[name]
-    mean, std = np.mean(scores), np.std(scores)
-    preds = (scores > 0).astype(int)
-    acc = (preds == labels).mean()
-    auroc = roc_auc_score(labels, scores) if len(np.unique(labels)) > 1 else np.nan
-    summary.append((name, mean, std, acc, auroc))
-
-    # Histogram
+for (name, mean, std, acc, auroc, TP, TN, FP, FN, total) in summary:
+    scores = all_scores[name]
+    preds = (scores > 0.5).astype(int)
+    labels = np.zeros_like(preds)
     plt.figure(figsize=(7,5))
     plt.hist(scores, bins=40, color="#69b3a2", alpha=0.7, edgecolor='black')
-    plt.axvline(0, color='red', linestyle='--', linewidth=1.5)
-    plt.title(f"{name}\nMean={mean:.3f}, Std={std:.3f}, D-Acc={acc*100:.1f}%, AUROC={auroc:.3f}")
-    plt.xlabel("Discriminator Score (logit)")
+    plt.axvline(0.5, color='red', linestyle='--', linewidth=1.5)
+    plt.title(f"{name}\nMean={mean:.3f}, Std={std:.3f}, Acc={acc*100:.1f}%, AUROC={auroc:.3f}")
+    plt.xlabel("Discriminator Probability (ŷ_b)")
     plt.ylabel("Image Count")
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR,f"{name}_hist.png"))
     plt.close()
 
-    # Correct predictions bar
-    TP = np.sum((preds==1)&(labels==1))
-    TN = np.sum((preds==0)&(labels==0))
+    # Bar chart of correct predictions
     plt.figure(figsize=(5,4))
-    plt.bar(["True Fake","True Real"], [TN, TP], color=["#ff7f7f","#90ee90"])
+    plt.bar(["True Fake","True Real"], [TP, TN],
+            color=["#ff7f7f","#90ee90"], edgecolor='black')
     plt.title(f"Correct Predictions — {name}")
-    for i,v in enumerate([TN,TP]): plt.text(i,v+5,f"{v}",ha='center')
+    for i,v in enumerate([TP,TN]):
+        plt.text(i, v + max(1, v*0.02), f"{v}", ha='center', fontsize=10, weight='bold')
     plt.ylabel("Count"); plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR,f"{name}_classification_bar.png"))
     plt.close()
 
-print("📊 Saved all experiment histograms and classification charts!")
+print(" Saved per-experiment histograms and classification charts.")
 
 # ============ COMBINED HISTOGRAM ============
 plt.figure(figsize=(9,6))
 for n,s in all_scores.items():
     plt.hist(s,bins=50,alpha=0.5,label=n,edgecolor='black')
-plt.axvline(0,color='red',ls='--',lw=1)
-plt.xlabel("Discriminator Score (logit)")
+plt.axvline(0.5,color='red',ls='--',lw=1)
+plt.xlabel("Discriminator Probability (ŷ_b)")
 plt.ylabel("Image Count")
 plt.title("Overall Discriminator Response — All Experiments")
 plt.legend(); plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR,"discriminator_scores.png"))
 plt.close()
-print("📈 Saved combined histogram → discriminator_scores.png")
 
-# ============ SUMMARY BAR (without AUROC) ============
+# ============ SUMMARY BAR ============
 labels  = [x[0] for x in summary]
 means   = [x[1] for x in summary]
 stds    = [x[2] for x in summary]
@@ -160,22 +196,20 @@ colors  = ['#FF4C4C','#4CAF50','#9C27B0','#000000']
 
 fig, ax1 = plt.subplots(figsize=(9,5))
 ax1.bar(labels, means, yerr=stds, color=colors, capsize=6, alpha=0.85)
-ax1.set_ylabel("Mean Discriminator Score")
+ax1.set_ylabel("Mean Discriminator Probability (ŷ_b)")
 ax1.set_title("Summary of Discriminator Performance (Mean ± Std, D-Accuracy %)")
-ax1.axhline(0,color='gray',ls='--',lw=1)
-
+ax1.axhline(0.5,color='gray',ls='--',lw=1)
 ax2 = ax1.twinx()
 ax2.plot(labels, accs, color='blue', marker='o', lw=2.5, label='D-Accuracy %')
 ax2.set_ylabel("Accuracy (%)"); ax2.set_ylim(0,100)
 for i,a in enumerate(accs):
-    ax2.text(i, a+3, f"{a:.1f}%", color='blue', ha='center', fontsize=9)
+    ax2.text(i, a+3, f"{a:.1f}%", color='blue', ha='center', fontsize=9, weight='bold')
 ax2.legend(loc='upper left')
 fig.tight_layout()
 plt.savefig(os.path.join(OUT_DIR,"summary_accuracy_bar.png"))
 plt.close()
-print("📊 Saved summary accuracy bar → summary_accuracy_bar.png")
 
-# ============ ADVANCED D-ACCURACY FIGURE ============
+# ============ ADVANCED D-ACCURACY COMPARISON ============
 plt.figure(figsize=(10,6))
 bars = plt.barh(labels, accs, color=colors, edgecolor='black', height=0.55)
 plt.xlabel("Discriminator Accuracy (%)", fontsize=12)
@@ -187,12 +221,12 @@ plt.grid(axis='x', linestyle='--', alpha=0.6)
 plt.tight_layout()
 plt.savefig(os.path.join(OUT_DIR, "advanced_d_accuracy.png"))
 plt.close()
-print("🎯 Saved advanced D-Accuracy comparison → advanced_d_accuracy.png")
 
 # ============ TEXT SUMMARY ============
 txt = os.path.join(OUT_DIR,"discriminator_summary.txt")
 with open(txt,"w") as f:
-    for n,m,s,a,u in summary:
-        f.write(f"{n}: mean={m:.3f}, std={s:.3f}, D-Acc={a*100:.1f}%, AUROC={u:.3f}, n={len(all_scores[n])}\n")
-print(f"📝 Summary saved → {txt}")
-print("\n✅ All experiments evaluated and final figures generated successfully!")
+    for n,m,s,a,u,TP,TN,FP,FN,total in summary:
+        f.write(f"{n}: mean={m:.3f}, std={s:.3f}, D-Acc={a*100:.1f}%, "
+                f"AUROC={u:.3f}, TP={TP}, TN={TN}, FP={FP}, FN={FN}, total={total}\n")
+print(f" Summary saved → {txt}")
+print("\n All experiments evaluated and detailed outputs (TP/TN/FP/FN + image copies) saved successfully!")

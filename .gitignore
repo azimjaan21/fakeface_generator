@@ -64,6 +64,7 @@ data/
 datasets/
 outputs/
 results/
+results_*/
 runs/
 
 ### ML checkpoints and weights ###
