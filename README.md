@@ -18,6 +18,11 @@ These synthetic samples are used for:
 
 ---
 
+
+![styleGAN3](https://github.com/user-attachments/assets/e6164164-5324-4127-a368-b648386ab270)
+
+
+
 ## 🖼️ Example Results
 
 <p align="center">
