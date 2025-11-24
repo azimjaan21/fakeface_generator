@@ -77,7 +77,17 @@ The synthetic images shared or visualized here are for **educational and researc
 
 Re-use for identity creation, impersonation, or any deceptive activity is **strictly prohibited**.
 
----
+-------------------
+
+💡 Author
+
+👨‍💻 Azimjon Akhtamov
+AI Researcher | DALAB | CBNU 
+--------
+![image](https://github.com/user-attachments/assets/610623a2-4266-424a-9353-7426334fe18f)
+--------
+☘️LinkTree: https://linktr.ee/azimjaan
+
 
 ## 📜 License
 
